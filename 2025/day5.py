@@ -36,25 +36,26 @@ def count_fresh(merged, available):
     import bisect
     if not merged:
         return 0
-    def total_fresh_ids(merged):
-        """Return the total number of distinct IDs covered by the merged ranges.
+    starts = [iv[0] for iv in merged]
+    count = 0
+    for val in available:
+        i = bisect.bisect_right(starts, val) - 1
+        if i >= 0 and merged[i][0] <= val <= merged[i][1]:
+            count += 1
+    return count
 
-        Each interval is inclusive, so an interval `a-b` contributes `b - a + 1` IDs.
-        """
-        total = 0
-        for a, b in merged:
-            total += (b - a + 1)
-        return total
+def total_fresh_ids(merged):
+    total = 0
+    for a, b in merged:
+        total += b + 1 - a
+    return total
+
 
 def main():
-    try:
-        intervals, available = parse_input('day5.input')
-        merged = merge_intervals(intervals)
-        print(total_fresh_ids(merged))
-        return count_fresh(merged, available)
-    except FileNotFoundError:
-        pass
-
+    intervals, available = parse_input('day5.input')
+    merged = merge_intervals(intervals)
+    print(total_fresh_ids(merged))
+    return count_fresh(merged, available)
 
 if __name__ == '__main__':
     print(main())
