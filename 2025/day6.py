@@ -78,7 +78,6 @@ def sum_problems(problems):
 
 def main():
     math_problems = parse_input('day6.input')
-    
     total = sum_problems(math_problems)
     return total
 
