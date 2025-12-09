@@ -14,22 +14,6 @@ def parse_input(path):
     data = [line.split(',') for line in lines]
     return [XYZCoordinate(d[0], d[1], d[2]) for d in data]
 
-def main():
-   # When run as script, print both parts: K=1000 result and last merge product
-    data = parse_input('day8.input')
-    res1, top3 = solve(data, K=1000)
-    print('After 1000 pairs: Top component sizes:', top3)
-    print('After 1000 pairs: Result:', res1)
-
-    last = last_merge(data)
-    if last is not None:
-        prod, a, b, d = last
-        print('Final merge between:', a, 'and', b)
-        print('Distance squared:', d)
-        print('Product of X coordinates:', prod)
-    else:
-        print('All already connected or no merge occurred')
-
 
 def solve(coords, K=1000):
     """Connect the K closest pairs among `coords` and return (result, top3_sizes).
@@ -152,6 +136,23 @@ def last_merge(coords):
                 return a.x * b.x, a, b, d
 
     return None
+
+
+def main():
+   # When run as script, print both parts: K=1000 result and last merge product
+    data = parse_input('day8.input')
+    res1, top3 = solve(data, K=1000)
+    print('After 1000 pairs: Top component sizes:', top3)
+    print('After 1000 pairs: Result:', res1)
+
+    last = last_merge(data)
+    if last is not None:
+        prod, a, b, d = last
+        print('Final merge between:', a, 'and', b)
+        print('Distance squared:', d)
+        print('Product of X coordinates:', prod)
+    else:
+        print('All already connected or no merge occurred')
 
 
 if __name__ == '__main__':
