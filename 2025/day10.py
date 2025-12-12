@@ -1,3 +1,5 @@
+import re
+
 def parse_line(line):
     """Parse a single machine line.
 
@@ -6,7 +8,6 @@ def parse_line(line):
       - wiring_schematics: list of lists of ints parsed from each parentheses group
       - joltage_requirements: list of ints parsed from the curly braces group
     """
-    import re
 
     line = line.rstrip('\n')
 
@@ -140,95 +141,6 @@ def solve_machine(light_diagram, wiring_schematics):
                 break
 
     return True, best[1]
-
-
-def solve_joltage_machine(wiring_schematics, joltage_requirements):
-    """Find nonnegative integer presses x minimizing sum(x) s.t. A x = b.
-
-    wiring_schematics: list of lists of counter indices affected by each button (length n)
-    joltage_requirements: list of target integers (length m)
-
-    Returns: (solvable: bool, presses: list of ints length n or None, total_presses:int)
-    """
-    m = len(joltage_requirements)
-    n = len(wiring_schematics)
-    b = list(joltage_requirements)
-
-    # Build sets for each button
-    S = [list(set(col)) for col in wiring_schematics]
-
-    # If a button touches no counters, it must be pressed 0 times
-    # Upper bound per button: min(b[i] for i in S[j]) if S[j] nonempty, else 0
-    ub0 = []
-    for j in range(n):
-        if not S[j]:
-            ub0.append(0)
-        else:
-            ub0.append(min(b[i] for i in S[j]))
-
-    # Order buttons to improve pruning: buttons that touch many counters and larger ub first
-    order = sorted(range(n), key=lambda j: (-len(S[j]), -ub0[j]))
-
-    best = [None, None]  # [best_total, best_vector]
-
-    # Precompute for pruning: for any remaining set of buttons, we will compute possible contribution per counter dynamically
-
-    def dfs(idx, rem, current, total):
-        # rem: remaining needs list length m
-        # current: partial presses list length n
-        # total: sum of current presses
-        # prune by best
-        if best[0] is not None and total >= best[0]:
-            return
-        if idx == len(order):
-            if all(x == 0 for x in rem):
-                best[0] = total
-                best[1] = current.copy()
-            return
-
-        j = order[idx]
-        if not S[j]:
-            # must be 0
-            current[j] = 0
-            dfs(idx + 1, rem, current, total)
-            return
-
-        # compute current upper bound for this button based on rem
-        ub = min(rem[i] for i in S[j])
-        # simple pruning: compute for each counter the sum of maximum contributions from remaining buttons
-        sum_possible = [0] * m
-        for t in range(idx, len(order)):
-            jj = order[t]
-            if not S[jj]:
-                continue
-            ub_jj = min(rem[i] for i in S[jj])
-            for i in S[jj]:
-                sum_possible[i] += ub_jj
-        for i in range(m):
-            if sum_possible[i] < rem[i]:
-                return
-
-        # try counts from 0..ub
-        for cnt in range(ub + 1):
-            # apply cnt to rem
-            if cnt > 0:
-                for i in S[j]:
-                    rem[i] -= cnt
-            current[j] = cnt
-            dfs(idx + 1, rem, current, total + cnt)
-            # undo
-            if cnt > 0:
-                for i in S[j]:
-                    rem[i] += cnt
-            current[j] = 0
-
-    rem0 = b.copy()
-    current0 = [0] * n
-    dfs(0, rem0, current0, 0)
-
-    if best[0] is None:
-        return False, None, 0
-    return True, best[1], best[0]
 
 
 def solve_joltage_ilp(wiring_schematics, joltage_requirements, timeout=None):
